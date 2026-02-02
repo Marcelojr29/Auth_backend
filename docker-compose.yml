@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: auth_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - auth_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_api
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: auth_db
+      JWT_SECRET: minha-chave-secreta-super-segura-para-desenvolvimento-2026
+      JWT_ACCESS_TOKEN_EXPIRATION: 15m
+      JWT_REFRESH_TOKEN_EXPIRATION: 7d
+      PORT: 3000
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:4200
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - auth_network
+
+volumes:
+  postgres_data:
+
+networks:
+  auth_network:
+    driver: bridge
